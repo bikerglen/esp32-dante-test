@@ -34,7 +34,7 @@ void setup (void)
 	// seed random number generator
 	randomSeed ((uint32_t)IPAddress (224, 0, 0, 251));
 
-	// call once in setup to poll for _netaudio_arc services
+	// call once in setup after connected to network to poll for _netaudio_arc services
 	Serial.printf ("scanning...\n\r");
 	devices.scan ();
 
@@ -45,7 +45,7 @@ void setup (void)
 
 void loop (void)
 {
-	// call repetively in loop to poll for _netaudio_arc services if a poll is needed
+	// call repetively in loop to poll for _netaudio_arc services
 	devices.scanIfNeeded ();
 }
 
