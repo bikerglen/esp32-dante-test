@@ -163,12 +163,16 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
 					packet[index+2], packet[index+3]);
 */
 				// found the "A" record, save name, ip, and ttl
-				aRecordFound = true;
-				memcpy (aRecordName, name, strlen ((char *)name)+1);
-				aRecordAddr = IPAddress (
-					packet[index+0], packet[index+1],
-					packet[index+2], packet[index+3]);
-				aRecordTTL = ttl;
+				// but make sure it's not an unassigned IP address 
+				// which can be sent by dante avio devices as their booting
+				if (packet[index+0] != 169) {
+					aRecordFound = true;
+					memcpy (aRecordName, name, strlen ((char *)name)+1);
+					aRecordAddr = IPAddress (
+						packet[index+0], packet[index+1],
+						packet[index+2], packet[index+3]);
+					aRecordTTL = ttl;
+				}
 			}
 
 			index += dlen;
@@ -248,7 +252,7 @@ bool DanteDeviceList::checkUpdateNeeded (void)
 	uint32_t now = millis ();
 
 	for (it = devices.begin(); it != devices.end(); it++) {
-		if ((*it)->timeToLive != 0) {
+		if ((*it)->timeToLive != 0 && !(*it)->getMissing ()) {
 			if (now - (*it)->updated > 1000 * (*it)->timeToLive) {
 				updateNeeded = true;
 			}
@@ -256,4 +260,19 @@ bool DanteDeviceList::checkUpdateNeeded (void)
 	}
 
 	return updateNeeded;
+}
+
+void DanteDeviceList::checkMissingDevices (void)
+{
+	std::vector<DanteDevice *>::iterator it;
+	uint32_t now = millis ();
+
+	for (it = devices.begin(); it != devices.end(); it++) {
+		if (((*it)->timeToLive != 0) && !(*it)->getMissing ()) {
+			if (now - (*it)->updated > 1000 * (*it)->timeToLive) {
+				Serial.printf ("doScan: device went missing: %s\n\r", (*it)->getName ());
+				(*it)->setMissing ();
+			}
+		}
+	}
 }

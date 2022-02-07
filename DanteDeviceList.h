@@ -11,11 +11,21 @@ class DanteDeviceList
 		// send a _netaudio_arc mDNS request
 		void scan (void);
 
+		// check if time to live has expired and perform a scan if needed
+		// TODO -- move code from main loop to here
+		void scanIfNeeded (void);
+
+		// TODO -- make private
 		// returns the number of known devices
 		int getDeviceCount (void);
 
+		// TODO -- make private
 		// returns true if any TTL's have expired
 		bool checkUpdateNeeded (void);
+
+		// TODO -- make private
+		// check for missing devices and set them to missing
+		void checkMissingDevices (void);
 
 		// returns pointer to the device with the fully qualified name
 		// e.g. AVIO-123.local

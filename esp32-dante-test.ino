@@ -100,10 +100,9 @@ void loop (void)
 				scanState = 0;
 				lastScanCheckTime = 0;
 				randomScanDelay = 0;
-				// check for devices that didn't update and remove them
-				// from the device list or set their TTL to zero so that
-				// they don't interfere with future updates
-				// TODO
+				// check for devices that didn't update and set them to
+				// missing so they don't interfere with future update timing
+				devices.checkMissingDevices ();
 			}
 		}
 	}

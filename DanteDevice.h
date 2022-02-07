@@ -6,6 +6,11 @@ class DanteDevice
 		~DanteDevice (void);
 
 		void updateAddress (IPAddress address, uint32_t timeToLive);
+
+		void setMissing (void);
+		bool getMissing (void);
+
+		char *getName (void);
 	
 		// connect a channel on this receive device to a a channel on a transmit device
 		// TODO void connect (int rxchan, DanteDevice *txdevice, int txchan);
@@ -16,4 +21,5 @@ class DanteDevice
 		IPAddress address;		// ip address
 		uint32_t updated;		// update time in milliseconds
 		uint32_t timeToLive;	// time to live in seconds
+		bool missing;
 };
