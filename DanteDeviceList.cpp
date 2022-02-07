@@ -132,7 +132,12 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
         index = parseDnsName (packet, index, name, false);
 		// Serial.printf ("  name:      %s\n\r", name);
 
-		if (!memcmp (name, "_netaudio-arc._udp.local", 25)) {
+		// even though we only ask for arc, let the other two update 
+		// the database of devices because it could cut down on the
+		// number of times we explicitly have to request an updated scan
+		if ((!memcmp (name, "_netaudio-arc._udp.local", 25)) |
+			(!memcmp (name, "_netaudio-dbc._udp.local", 25)) |
+			(!memcmp (name, "_netaudio-cmc._udp.local", 25))) {
 			interesting = true;
 		}
 
