@@ -11,7 +11,6 @@
 #include <lwip/ip_addr.h>
 #include <lwip/igmp.h>
 #include <Arduino.h>
-#include "RingBuf.h"
 
 #include <vector>
 
@@ -76,12 +75,14 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
 
 	uint8_t *packet = _packet.data ();
 
-	if (remoteAddr[3] == 0) {
+/*
+	if (remoteAddr[3] == 124) {
 		for (int i = 0; i < _packet.length(); i++) {
 			Serial.printf ("%02x ", packet[i]);
 		}
 		Serial.printf ("\n\r");
 	}
+*/
 
 	// TODO -- assume well-formed packets for now, add checking for errors later
 
@@ -94,17 +95,19 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
     uint16_t authorities = (packet[index++] << 8) | packet[index++];
     uint16_t additional  = (packet[index++] << 8) | packet[index++];
 
-    Serial.printf ("  tid:       %04x\n\r", tid);
-    Serial.printf ("  flags:     %04x\n\r", flags);
-    Serial.printf ("  questions: %04x\n\r", questions);
-    Serial.printf ("  answers:   %04x\n\r", answers);
-    Serial.printf ("  auths:     %04x\n\r", authorities);
-    Serial.printf ("  addits:    %04x\n\r", additional);
+    // Serial.printf ("  tid:       %04x\n\r", tid);
+    // Serial.printf ("  flags:     %04x\n\r", flags);
+    // Serial.printf ("  questions: %04x\n\r", questions);
+    // Serial.printf ("  answers:   %04x\n\r", answers);
+    // Serial.printf ("  auths:     %04x\n\r", authorities);
+    // Serial.printf ("  addits:    %04x\n\r", additional);
 
     int records = questions + answers + authorities + additional;
 
 	bool interesting = false;
 	bool aRecordFound = false; // DNS "A" record found in response
+	uint8_t aRecordName[256];
+	IPAddress aRecordAddr;
 
     for (int record = 0; record < records; record++) {
 
@@ -112,9 +115,9 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
         uint8_t data[256];
 
         index = parseDnsName (packet, index, name, false);
-		Serial.printf ("  name:      %s\n\r", name);
+		// Serial.printf ("  name:      %s\n\r", name);
 
-		if (!memcmp (name, "_netaudio-arc._udp.local", 24)) {
+		if (!memcmp (name, "_netaudio-arc._udp.local", 25)) {
 			interesting = true;
 		}
 
@@ -123,24 +126,30 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
         bool flush = (pclass & 0x8000) ? 1 : 0;
         pclass &= 0x7fff;
 
-		Serial.printf ("    type:    %d\n\r", type);
-		Serial.printf ("    class:   %d\n\r", pclass);
-		Serial.printf ("    flush:   %d\n\r", flush);
+		// Serial.printf ("    type:    %d\n\r", type);
+		// Serial.printf ("    class:   %d\n\r", pclass);
+		// Serial.printf ("    flush:   %d\n\r", flush);
 
 		if (record >= questions) {
 			uint32_t ttl    = (packet[index++] << 24) | (packet[index++] << 16) |
 							 (packet[index++] <<  8) | (packet[index++] <<  0);
 			uint16_t dlen   = (packet[index++] << 8)  | packet[index++];
 
-			Serial.printf ("    ttl:     %d\n\r", ttl);
-			Serial.printf ("    dlen:    %d\n\r", dlen);
+			// Serial.printf ("    ttl:     %d\n\r", ttl);
+			// Serial.printf ("    dlen:    %d\n\r", dlen);
 
 			if (type == 12) {
 				parseDnsName (packet, index, data, false);
-				Serial.printf ("      PTR:     %s\n\r", data);
+				// Serial.printf ("      PTR:     %s\n\r", data);
 			} else if (type == 1) {
-				aRecordFound = true;
+/*
 				Serial.printf ("      IP Addr: %d.%d.%d.%d\n\r", 
+					packet[index+0], packet[index+1],
+					packet[index+2], packet[index+3]);
+*/
+				aRecordFound = true;
+				memcpy (aRecordName, name, strlen ((char *)name)+1);
+				aRecordAddr = IPAddress (
 					packet[index+0], packet[index+1],
 					packet[index+2], packet[index+3]);
 			}
@@ -150,7 +159,8 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
     }
 
 	if (interesting && aRecordFound) {
-		Serial.printf ("   ^^^ we need to save the above ^^^\n\r");
+		Serial.printf ("  name: %s\n\r  addr: %d.%d.%d.%d\n\r",
+			aRecordName, aRecordAddr[0], aRecordAddr[1], aRecordAddr[2], aRecordAddr[3]);
 	}
 }
 
@@ -161,7 +171,7 @@ int DanteDeviceList::parseDnsName (uint8_t *packet, int index, uint8_t *name, bo
     int nlength = 0;
 
     while ((length = packet[index++]) != 0) {
-        if (length == 0xc0) {
+        if ((length & 0xc0) == 0xc0) {
             int new_index = ((length & 0x3F) << 8) | packet[index++];
             nlength += parseDnsName (packet, new_index, &name[nlength], true);
             break;
