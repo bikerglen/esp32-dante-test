@@ -83,8 +83,7 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
 	IPAddress localAddr = _packet.localIP ();
 	IPAddress remoteAddr = _packet.remoteIP ();
 
-	Serial.printf ("packet:\n\r");
-	Serial.printf ("  local: %d.%d.%d.%d:%d, remote: %d.%d.%d.%d:%d\n\r", 
+	Serial.printf ("mdns packet: local: %d.%d.%d.%d:%d, remote: %d.%d.%d.%d:%d\n\r", 
 		localAddr[0], localAddr[1], localAddr[2], localAddr[3], _packet.localPort (),
 		remoteAddr[0], remoteAddr[1], remoteAddr[2], remoteAddr[3], _packet.remotePort ());
 
@@ -123,6 +122,7 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
 	bool aRecordFound = false; // DNS "A" record found in response
 	uint8_t aRecordName[256];
 	IPAddress aRecordAddr;
+	uint32_t aRecordTTL;
 
     for (int record = 0; record < records; record++) {
 
@@ -162,11 +162,13 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
 					packet[index+0], packet[index+1],
 					packet[index+2], packet[index+3]);
 */
+				// found the "A" record, save name, ip, and ttl
 				aRecordFound = true;
 				memcpy (aRecordName, name, strlen ((char *)name)+1);
 				aRecordAddr = IPAddress (
 					packet[index+0], packet[index+1],
 					packet[index+2], packet[index+3]);
+				aRecordTTL = ttl;
 			}
 
 			index += dlen;
@@ -176,6 +178,15 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
 	if (interesting && aRecordFound) {
 		Serial.printf ("  name: %s\n\r  addr: %d.%d.%d.%d\n\r",
 			aRecordName, aRecordAddr[0], aRecordAddr[1], aRecordAddr[2], aRecordAddr[3]);
+		
+		// see if device already exists or not
+		DanteDevice *device = this->searchfqn (aRecordName);
+		if (device) {
+			device->updateAddress (aRecordAddr, aRecordTTL);
+		} else {
+			DanteDevice *device = new DanteDevice (aRecordName, aRecordAddr, aRecordTTL);
+			devices.push_back (device);
+		}
 	}
 }
 
@@ -207,4 +218,18 @@ int DanteDeviceList::parseDnsName (uint8_t *packet, int index, uint8_t *name, bo
     name[nlength++] = 0;
 
     return index;
+}
+
+
+DanteDevice *DanteDeviceList::searchfqn (uint8_t *name)
+{
+	std::vector<DanteDevice *>::iterator it;
+
+	for (it = devices.begin(); it != devices.end(); it++) {
+		if (!strcmp ((char *)(*it)->name, (char *)name)) {
+			return *it;
+		}
+	}
+		
+	return NULL;
 }
