@@ -6,6 +6,7 @@ class DanteDeviceList
 		~DanteDeviceList (void);
 		
 		bool begin (void);
+		void scan (void);
 
 	private:
 

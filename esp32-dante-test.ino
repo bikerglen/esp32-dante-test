@@ -8,7 +8,7 @@
 #include "DanteDevice.h"
 #include "DanteDeviceList.h"
 
-static bool eth_connected = false;
+static volatile bool eth_connected = false;
 
 DanteDeviceList devices;
 
@@ -26,6 +26,17 @@ void setup (void)
 
 	// set up Dante mDNS listener
 	devices.begin ();
+
+	// wait for ethernet to connect
+	while (!eth_connected) {
+	}
+
+	// start a scan
+	Serial.printf ("scanning...\n\r");
+	devices.scan ();
+
+	// wait a second for scan to complete
+	delay (1000);
 }
 
 
