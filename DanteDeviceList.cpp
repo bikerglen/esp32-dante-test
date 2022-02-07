@@ -69,15 +69,19 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
 	IPAddress localAddr = _packet.localIP ();
 	IPAddress remoteAddr = _packet.remoteIP ();
 
-	Serial.printf ("packet received!\n\r");
-	Serial.printf ("  local:  %3d.%3d.%3d.%3d:%d\n\r", 
-		localAddr[0], localAddr[1],
-		localAddr[2], localAddr[3], _packet.localPort ());
-	Serial.printf ("  remote: %3d.%3d.%3d.%3d:%d\n\r", 
-		remoteAddr[0], remoteAddr[1],
-		remoteAddr[2], remoteAddr[3], _packet.remotePort ());
+	Serial.printf ("packet:\n\r");
+	Serial.printf ("  local: %d.%d.%d.%d:%d, remote: %d.%d.%d.%d:%d\n\r", 
+		localAddr[0], localAddr[1], localAddr[2], localAddr[3], _packet.localPort (),
+		remoteAddr[0], remoteAddr[1], remoteAddr[2], remoteAddr[3], _packet.remotePort ());
 
 	uint8_t *packet = _packet.data ();
+
+	if (remoteAddr[3] == 0) {
+		for (int i = 0; i < _packet.length(); i++) {
+			Serial.printf ("%02x ", packet[i]);
+		}
+		Serial.printf ("\n\r");
+	}
 
 	// TODO -- assume well-formed packets for now, add checking for errors later
 
@@ -99,22 +103,29 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
 
     int records = questions + answers + authorities + additional;
 
+	bool interesting = false;
+	bool aRecordFound = false; // DNS "A" record found in response
+
     for (int record = 0; record < records; record++) {
 
         uint8_t name[256];
         uint8_t data[256];
 
         index = parseDnsName (packet, index, name, false);
+		Serial.printf ("  name:      %s\n\r", name);
 
-        Serial.printf ("  name:      %s\n\r", name);
+		if (!memcmp (name, "_netaudio-arc._udp.local", 24)) {
+			interesting = true;
+		}
 
         uint16_t type   = (packet[index++] << 8)  | packet[index++];
         uint16_t pclass = (packet[index++] << 8)  | packet[index++]; 
         bool flush = (pclass & 0x8000) ? 1 : 0;
         pclass &= 0x7fff;
-        Serial.printf ("    type:    %d\n\r", type);
-        Serial.printf ("    class:   %d\n\r", pclass);
-        Serial.printf ("    flush:   %d\n\r", flush);
+
+		Serial.printf ("    type:    %d\n\r", type);
+		Serial.printf ("    class:   %d\n\r", pclass);
+		Serial.printf ("    flush:   %d\n\r", flush);
 
 		if (record >= questions) {
 			uint32_t ttl    = (packet[index++] << 24) | (packet[index++] << 16) |
@@ -128,13 +139,19 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
 				parseDnsName (packet, index, data, false);
 				Serial.printf ("      PTR:     %s\n\r", data);
 			} else if (type == 1) {
-				Serial.printf ("      IP Addr: %3d.%3d.%3d.%3d\n\r", 
+				aRecordFound = true;
+				Serial.printf ("      IP Addr: %d.%d.%d.%d\n\r", 
 					packet[index+0], packet[index+1],
 					packet[index+2], packet[index+3]);
 			}
+
 			index += dlen;
 		}
     }
+
+	if (interesting && aRecordFound) {
+		Serial.printf ("   ^^^ we need to save the above ^^^\n\r");
+	}
 }
 
 
@@ -145,7 +162,8 @@ int DanteDeviceList::parseDnsName (uint8_t *packet, int index, uint8_t *name, bo
 
     while ((length = packet[index++]) != 0) {
         if (length == 0xc0) {
-            nlength += parseDnsName (packet, packet[index++], &name[nlength], true);
+            int new_index = ((length & 0x3F) << 8) | packet[index++];
+            nlength += parseDnsName (packet, new_index, &name[nlength], true);
             break;
         } else {
             if (reference || (nlength != 0)) {
