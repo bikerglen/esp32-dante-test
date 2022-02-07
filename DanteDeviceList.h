@@ -5,8 +5,17 @@ class DanteDeviceList
 		DanteDeviceList (void);
 		~DanteDeviceList (void);
 		
+		// create mDNS listener on port 5353 and capture _netaudio_arc responses
 		bool begin (void);
+
+		// send a _netaudio_arc mDNS request
 		void scan (void);
+
+		// returns the number of known devices
+		int getDeviceCount (void);
+
+		// returns true if any TTL's have expired
+		bool checkUpdateNeeded (void);
 
 		// returns pointer to the device with the fully qualified name
 		// e.g. AVIO-123.local

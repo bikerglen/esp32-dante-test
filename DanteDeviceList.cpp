@@ -233,3 +233,27 @@ DanteDevice *DanteDeviceList::searchfqn (uint8_t *name)
 		
 	return NULL;
 }
+
+
+int DanteDeviceList::getDeviceCount (void)
+{
+	return devices.size();
+}
+
+
+bool DanteDeviceList::checkUpdateNeeded (void)
+{
+	bool updateNeeded = false;
+	std::vector<DanteDevice *>::iterator it;
+	uint32_t now = millis ();
+
+	for (it = devices.begin(); it != devices.end(); it++) {
+		if ((*it)->timeToLive != 0) {
+			if (now - (*it)->updated > 1000 * (*it)->timeToLive) {
+				updateNeeded = true;
+			}
+		}
+	}
+
+	return updateNeeded;
+}
