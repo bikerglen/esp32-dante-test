@@ -17,41 +17,6 @@
 #include "DanteDevice.h"
 #include "DanteDeviceList.h"
 
-DanteDeviceList::DanteDeviceList (void)
-{
-}
-
-
-DanteDeviceList::~DanteDeviceList (void)
-{
-}
-
-
-bool DanteDeviceList::begin (void)
-{
-	bool success = false; // assume we will fail
-
-	// mDNS multicast IP address
-	IPAddress address = IPAddress (224, 0, 0, 251);
-	
-	// mDNS multicast port
-	if (udp.listenMulticast (address, 5353)) {
-		ip4_addr_t ifaddr;
-		ip4_addr_t multicast_addr;
-
-		ifaddr.addr = static_cast<uint32_t>(WiFi.localIP());
-		multicast_addr.addr = static_cast<uint32_t>(IPAddress (224, 0, 0, 251));
-		igmp_joingroup (&ifaddr, &multicast_addr);
-		udp.onPacket(std::bind(&DanteDeviceList::parsePacket, this,
-		std::placeholders::_1));
-
-		success = true;
-	}
-
-	return success;
-}
-
-
 static const uint8_t _netaudio_arc[] = {
 	0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x0d,0x5f,0x6e,0x65,
     0x74,0x61,0x75,0x64,0x69,0x6f,0x2d,0x61,0x72,0x63,0x04,0x5f,0x75,0x64,0x70,0x05,
@@ -70,11 +35,143 @@ static const uint8_t _netaudio_cmc[] = {
     0x6c,0x6f,0x63,0x61,0x6c,0x00,0x00,0x0c,0x80,0x01
 };
 
+
+DanteDeviceList::DanteDeviceList (void)
+{
+}
+
+
+DanteDeviceList::~DanteDeviceList (void)
+{
+}
+
+
+bool DanteDeviceList::begin (void)
+{
+	bool success = false; // assume we will fail
+
+	// clear state and timer variables
+    lastScanTime = 0;
+    scanState = 0;
+    lastScanCheckTime = 0;
+    randomScanDelay = 0;
+
+	// mDNS multicast IP address
+	IPAddress address = IPAddress (224, 0, 0, 251);
+	
+	// mDNS multicast port
+	if (udp.listenMulticast (address, 5353)) {
+		ip4_addr_t ifaddr;
+		ip4_addr_t multicast_addr;
+
+		ifaddr.addr = static_cast<uint32_t>(WiFi.localIP());
+		multicast_addr.addr = static_cast<uint32_t>(IPAddress (224, 0, 0, 251));
+		igmp_joingroup (&ifaddr, &multicast_addr);
+		udp.onPacket(std::bind(&DanteDeviceList::parsePacket, this,
+		std::placeholders::_1));
+
+		success = true;
+	}
+
+
+	return success;
+}
+
+
 void DanteDeviceList::scan (void)
 {
 	udp.write (_netaudio_arc, sizeof (_netaudio_arc));
 	// udp.write (_netaudio_dbc, sizeof (_netaudio_dbc));
 	// udp.write (_netaudio_cmc, sizeof (_netaudio_cmc));
+	lastScanTime = millis ();
+}
+
+
+void DanteDeviceList::scanIfNeeded (void)
+{
+    // do we need to do another check for devices and updated IP addresses
+    bool doScan = false;
+
+    // if no known devices, run a scan every 30 seconds 
+    if (getDeviceCount () == 0) {
+        if (millis () - lastScanTime > 1000 * 30) {
+            Serial.printf ("doScan: no known devices and 30 seconds since last scan\n\r");
+            doScan = true;
+        }
+    } else {
+        // devices known, see if any need updates then update 50ms to 5s later
+        // can't just repeat every two minutes since another device may have already
+        // requested a scan and caused everything to already be updated
+        if (scanState == 0) {
+            // no scan scheduled, see if we need to do a scan
+            if (checkUpdateNeeded ()) {
+                // schedule the scan from 50ms to 5s from now
+                Serial.printf ("doScan: updates needed\n\r");
+                lastScanCheckTime = millis ();
+                randomScanDelay = random (50,5000); // 50 ms to 5 seconds holdoff
+                scanState = 1;
+            }
+        } else if (scanState == 1) {
+            // scan scheduled. once the random delay has elapsed, do one more check. 
+            // if scan still needed, run the scan
+            if (millis () - lastScanCheckTime > randomScanDelay) {
+                Serial.printf ("doScan: random holdoff timer expired\n\r");
+                if (checkUpdateNeeded ()) {
+                    Serial.printf ("doScan: updates still needed after timer expiration\n\r");
+                    doScan = true;
+                    scanState = 2;
+                    lastScanCheckTime = millis ();
+                } else {
+                    Serial.printf ("doScan: updates not needed aftr timer expiration\n\r");
+                    scanState = 0;
+                    lastScanCheckTime = 0;
+                    randomScanDelay = 0;
+                }
+            }
+        } else if (scanState == 2) {
+            // don't allow another scan for 1 second after scan started
+            if (millis () - lastScanCheckTime > 1000) {
+                Serial.printf ("doScan: post update timer expired\n\r");
+                scanState = 0;
+                lastScanCheckTime = 0;
+                randomScanDelay = 0;
+                // check for devices that didn't update and set them to
+                // missing so they don't interfere with future update timing
+                checkMissingDevices ();
+            }
+        }
+	}
+
+    if (doScan) {
+        Serial.printf ("doScan: scan started!\n\r");
+        scan ();
+    }
+}
+
+
+DanteDevice *DanteDeviceList::searchfqn (uint8_t *name)
+{
+	std::vector<DanteDevice *>::iterator it;
+
+	for (it = devices.begin(); it != devices.end(); it++) {
+		if (!strcmp ((char *)(*it)->name, (char *)name)) {
+			return *it;
+		}
+	}
+		
+	return NULL;
+}
+
+
+DanteDevice *DanteDeviceList::search (String name)
+{
+	return NULL;
+}
+
+
+int DanteDeviceList::getDeviceCount (void)
+{
+	return devices.size();
 }
 
 
@@ -227,26 +324,6 @@ int DanteDeviceList::parseDnsName (uint8_t *packet, int index, uint8_t *name, bo
     name[nlength++] = 0;
 
     return index;
-}
-
-
-DanteDevice *DanteDeviceList::searchfqn (uint8_t *name)
-{
-	std::vector<DanteDevice *>::iterator it;
-
-	for (it = devices.begin(); it != devices.end(); it++) {
-		if (!strcmp ((char *)(*it)->name, (char *)name)) {
-			return *it;
-		}
-	}
-		
-	return NULL;
-}
-
-
-int DanteDeviceList::getDeviceCount (void)
-{
-	return devices.size();
 }
 
 
