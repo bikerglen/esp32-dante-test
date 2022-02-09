@@ -177,6 +177,10 @@ int DanteDeviceList::getDeviceCount (void)
 
 void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
 {
+	// TODO -- apparently this runs at interrupt time
+	// TODO -- turn into a quick function to copy the packet elsewhere for
+	// TODO -- processing in the main loop
+
 	IPAddress localAddr = _packet.localIP ();
 	IPAddress remoteAddr = _packet.remoteIP ();
 
