@@ -19,6 +19,7 @@
 #include "AsyncUDP.h"
 #include "DanteDevice.h"
 #include "DanteDeviceList.h"
+#include "DanteDeviceMonitor.h"
 
 #include "secrets.h"
 
@@ -27,6 +28,7 @@
 static volatile bool eth_connected = false;
 
 DanteDeviceList devices;
+DanteDeviceMonitor deviceMonitor;
 
 auto loopTimer = timer_create_default(); 
 bool onLoopTimer (void *);
@@ -77,6 +79,9 @@ void setup (void)
 	// set up Dante mDNS listener
 	devices.begin ();
 
+	// set up Dante config change monitor
+	deviceMonitor.begin ();
+
 	// seed random number generator
 	randomSeed ((uint32_t)IPAddress (224, 0, 0, 251));
 
@@ -94,8 +99,16 @@ void setup (void)
 
 void loop (void)
 {
+	DanteDevice *device;
+
 	// call repetively in loop to poll for _netaudio_arc services
 	devices.scanIfNeeded ();
+
+	// check for configuration changes
+	device = deviceMonitor.changed ();
+	if (device) {
+		Serial.printf ("device changed\n\r");
+	}
 
 	// loop timer tick
 	loopTimer.tick ();
