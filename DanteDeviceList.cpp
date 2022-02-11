@@ -154,7 +154,7 @@ DanteDevice *DanteDeviceList::searchServer (String server)
 	std::vector<DanteDevice *>::iterator it;
 
 	for (it = devices.begin(); it != devices.end(); it++) {
-		if (!strcmp ((*it)->server.c_str(), server.c_str())) {
+		if (!strcmp ((*it)->getServer().c_str(), server.c_str())) {
 			return *it;
 		}
 	}
@@ -365,7 +365,13 @@ void DanteDeviceList::list (void)
 	std::vector<DanteDevice *>::iterator it;
 
 	for (it = devices.begin(); it != devices.end(); it++) {
-		Serial.printf ("%d.%d.%d.%d %s\n\r", (*it)->address[0], (*it)->address[1],
-			(*it)->address[2], (*it)->address[3], (*it)->server.c_str());
+		Serial.printf ("%d.%d.%d.%d %s:\n\r",
+			(*it)->address[0], (*it)->address[1], (*it)->address[2], (*it)->address[3], 
+			(*it)->getServer().c_str());
+		Serial.printf ("  missing: %s\n\r", (*it)->getMissing() ? "yes" : "no");
+		Serial.printf ("  name: %s\n\r", (*it)->getName().c_str());
+		Serial.printf ("  tx channels: %d\n\r", 0);// TODO
+		Serial.printf ("  rx channels: %d\n\r", 0); // TODO
+		Serial.printf ("  subscriptions: \n\r"); // TODO
 	}
 }
