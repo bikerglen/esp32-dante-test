@@ -120,7 +120,11 @@ void loop (void)
 	if (Serial.available ()) {
 		key = Serial.read ();
 		if (key == 'l') {
+			// list devices
 			devices.listDevices ();
+		} else if (key == 's') {
+			// force an mDNS scan
+			devices.scan ();
 		}
 	}
 }
