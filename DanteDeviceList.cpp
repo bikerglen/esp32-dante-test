@@ -149,22 +149,16 @@ void DanteDeviceList::scanIfNeeded (void)
 }
 
 
-DanteDevice *DanteDeviceList::searchfqn (uint8_t *name)
+DanteDevice *DanteDeviceList::searchServer (String server)
 {
 	std::vector<DanteDevice *>::iterator it;
 
 	for (it = devices.begin(); it != devices.end(); it++) {
-		if (!strcmp ((char *)(*it)->name, (char *)name)) {
+		if (!strcmp ((*it)->server.c_str(), server.c_str())) {
 			return *it;
 		}
 	}
 		
-	return NULL;
-}
-
-
-DanteDevice *DanteDeviceList::search (String name)
-{
 	return NULL;
 }
 
@@ -221,7 +215,7 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
 
 	bool interesting = false;
 	bool aRecordFound = false; // DNS "A" record found in response
-	uint8_t aRecordName[256];
+	String aRecordName;
 	IPAddress aRecordAddr;
 	uint32_t aRecordTTL;
 
@@ -273,7 +267,7 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
 				// which can be sent by dante avio devices as their booting
 				if (packet[index+0] != 169) {
 					aRecordFound = true;
-					memcpy (aRecordName, name, strlen ((char *)name)+1);
+					aRecordName = (char *)name;
 					aRecordAddr = IPAddress (
 						packet[index+0], packet[index+1],
 						packet[index+2], packet[index+3]);
@@ -286,11 +280,12 @@ void DanteDeviceList::parsePacket (AsyncUDPPacket _packet)
     }
 
 	if (interesting && aRecordFound) {
-		Serial.printf ("  name: %s\n\r  addr: %d.%d.%d.%d\n\r",
-			aRecordName, aRecordAddr[0], aRecordAddr[1], aRecordAddr[2], aRecordAddr[3]);
+		Serial.printf ("  server: %s\n\r  addr: %d.%d.%d.%d\n\r",
+			aRecordName.c_str(), 
+			aRecordAddr[0], aRecordAddr[1], aRecordAddr[2], aRecordAddr[3]);
 		
 		// see if device already exists or not
-		DanteDevice *device = this->searchfqn (aRecordName);
+		DanteDevice *device = this->searchServer (aRecordName);
 		if (device) {
 			device->updateAddress (aRecordAddr, aRecordTTL);
 		} else {
@@ -348,6 +343,7 @@ bool DanteDeviceList::checkUpdateNeeded (void)
 	return updateNeeded;
 }
 
+
 void DanteDeviceList::checkMissingDevices (void)
 {
 	std::vector<DanteDevice *>::iterator it;
@@ -356,9 +352,20 @@ void DanteDeviceList::checkMissingDevices (void)
 	for (it = devices.begin(); it != devices.end(); it++) {
 		if (((*it)->timeToLive != 0) && !(*it)->getMissing ()) {
 			if (now - (*it)->updated > 1000 * (*it)->timeToLive) {
-				Serial.printf ("doScan: device went missing: %s\n\r", (*it)->getName ());
+				Serial.printf ("doScan: device went missing: %s\n\r", (*it)->getServer ());
 				(*it)->setMissing ();
 			}
 		}
+	}
+}
+
+
+void DanteDeviceList::list (void)
+{
+	std::vector<DanteDevice *>::iterator it;
+
+	for (it = devices.begin(); it != devices.end(); it++) {
+		Serial.printf ("%d.%d.%d.%d %s\n\r", (*it)->address[0], (*it)->address[1],
+			(*it)->address[2], (*it)->address[3], (*it)->server.c_str());
 	}
 }

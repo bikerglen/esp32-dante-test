@@ -16,17 +16,15 @@ class DanteDeviceList
 		// check if time to live has expired and perform a scan if needed
 		void scanIfNeeded (void);
 
-		// returns pointer to the device with the fully qualified name
-		// e.g. AVIO-123.local
+		// returns pointer to the device with the server name
 		// TODO -- use something safer like an Arduino String instead of c strings
-		DanteDevice *searchfqn (uint8_t *name);
-
-		// TODO -- returns pointer to the device with the short name
-		// e.g. AVIO-123
-		DanteDevice *search (String name);
+		DanteDevice *searchServer (String server);
 
 		// returns the number of known devices
 		int getDeviceCount (void);
+
+		// list known devices to Serial
+		void list (void);
 
 	private:
 

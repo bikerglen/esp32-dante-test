@@ -99,6 +99,7 @@ void setup (void)
 
 void loop (void)
 {
+	uint8_t key;
 	DanteDevice *device;
 
 	// call repetively in loop to poll for _netaudio_arc services
@@ -112,6 +113,13 @@ void loop (void)
 
 	// loop timer tick
 	loopTimer.tick ();
+
+	if (Serial.available ()) {
+		key = Serial.read ();
+		if (key == 'l') {
+			devices.list ();
+		}
+	}
 }
 
  
