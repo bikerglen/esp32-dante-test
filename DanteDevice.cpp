@@ -59,14 +59,16 @@ void DanteDevice::updateAddress (IPAddress address, uint32_t timeToLive)
 	this->missing = false;
 }
 
-void DanteDevice::setMissing (void)
+bool DanteDevice::populateDeviceInfo (void)
 {
-	this->missing = true;
-}
+	bool success = true;
 
-bool DanteDevice::getMissing (void)
-{
-	return this->missing;
+	this->commandGetDeviceName ();
+	this->commandGetChannelCounts ();
+	this->commandGetSubscriptions ();
+	this->setNew (false);
+
+	return success;
 }
 
 String DanteDevice::getServer (void)
@@ -216,4 +218,12 @@ bool DanteDevice::commandGetChannelCounts (void)
 	}
 
 	return success;
+}
+
+
+bool DanteDevice::commandGetSubscriptions (void)
+{
+	// TODO -- implement this command
+	Serial.printf ("DanteDevice::commandGetSubscriptions failed\n\r");
+	return false;
 }

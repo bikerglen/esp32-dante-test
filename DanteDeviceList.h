@@ -16,29 +16,32 @@ class DanteDeviceList
 		// check if time to live has expired and perform a scan if needed
 		void scanIfNeeded (void);
 
+		// call this repetitively from loop
+		// populates name, channel counts, and subscription info for any new devices
+		void populateNewDevices (void);
+
 		// returns pointer to the device with the server name
-		// TODO -- use something safer like an Arduino String instead of c strings
 		DanteDevice *searchServer (String server);
 
 		// returns the number of known devices
 		int getDeviceCount (void);
 
 		// list known devices to Serial
-		void list (void);
+		void listDevices (void);
 
 	private:
-
-		// returns true if any TTL's have expired
-		bool checkUpdateNeeded (void);
-
-		// check for missing devices and set them to missing
-		void checkMissingDevices (void);
 
 		// parse received mDNS packet
 		void parsePacket (AsyncUDPPacket _packet);
 
 		// parse mDNS domain name
 		int parseDnsName (uint8_t *packet, int index, uint8_t *name, bool reference);
+
+		// returns true if any TTL's have expired
+		bool checkUpdateNeeded (void);
+
+		// check for missing devices and set them to missing
+		void checkMissingDevices (void);
 
 		AsyncUDP udp;
 		std::vector<DanteDevice *> devices;

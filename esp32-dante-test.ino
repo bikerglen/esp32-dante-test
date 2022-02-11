@@ -105,6 +105,9 @@ void loop (void)
 	// call repetively in loop to poll for _netaudio_arc services
 	devices.scanIfNeeded ();
 
+	// update any new devices
+	devices.populateNewDevices ();
+
 	// check for configuration changes
 	device = deviceMonitor.changed ();
 	if (device) {
@@ -117,7 +120,7 @@ void loop (void)
 	if (Serial.available ()) {
 		key = Serial.read ();
 		if (key == 'l') {
-			devices.list ();
+			devices.listDevices ();
 		}
 	}
 }

@@ -149,6 +149,22 @@ void DanteDeviceList::scanIfNeeded (void)
 }
 
 
+void DanteDeviceList::populateNewDevices (void)
+{
+	std::vector<DanteDevice *>::iterator it;
+
+	for (it = devices.begin(); it != devices.end(); it++) {
+		if ((*it)->getNew ()) {
+			Serial.printf ("populating new device: %s\n\r", (*it)->getServer().c_str());
+			(*it)->populateDeviceInfo ();
+			// only populate one device per call to 
+			// give other tasks an opportunity to run
+			break;
+		}
+	}
+}
+
+
 DanteDevice *DanteDeviceList::searchServer (String server)
 {
 	std::vector<DanteDevice *>::iterator it;
@@ -166,6 +182,25 @@ DanteDevice *DanteDeviceList::searchServer (String server)
 int DanteDeviceList::getDeviceCount (void)
 {
 	return devices.size();
+}
+
+
+void DanteDeviceList::listDevices (void)
+{
+	std::vector<DanteDevice *>::iterator it;
+	int txChans, rxChans;
+
+	for (it = devices.begin(); it != devices.end(); it++) {
+		Serial.printf ("%d.%d.%d.%d %s:\n\r",
+			(*it)->address[0], (*it)->address[1], (*it)->address[2], (*it)->address[3], 
+			(*it)->getServer().c_str());
+		Serial.printf ("  missing: %s\n\r", (*it)->getMissing() ? "yes" : "no");
+		Serial.printf ("  name: %s\n\r", (*it)->getName().c_str());
+		(*it)->getChannelCounts (&txChans, &rxChans);
+		Serial.printf ("  tx channels: %d\n\r", txChans);
+		Serial.printf ("  rx channels: %d\n\r", rxChans);
+		Serial.printf ("  subscriptions: \n\r"); // TODO
+	}
 }
 
 
@@ -360,20 +395,3 @@ void DanteDeviceList::checkMissingDevices (void)
 }
 
 
-void DanteDeviceList::list (void)
-{
-	std::vector<DanteDevice *>::iterator it;
-	int txChans, rxChans;
-
-	for (it = devices.begin(); it != devices.end(); it++) {
-		Serial.printf ("%d.%d.%d.%d %s:\n\r",
-			(*it)->address[0], (*it)->address[1], (*it)->address[2], (*it)->address[3], 
-			(*it)->getServer().c_str());
-		Serial.printf ("  missing: %s\n\r", (*it)->getMissing() ? "yes" : "no");
-		Serial.printf ("  name: %s\n\r", (*it)->getName().c_str());
-		(*it)->getChannelCounts (&txChans, &rxChans);
-		Serial.printf ("  tx channels: %d\n\r", txChans);
-		Serial.printf ("  rx channels: %d\n\r", rxChans);
-		Serial.printf ("  subscriptions: \n\r"); // TODO
-	}
-}

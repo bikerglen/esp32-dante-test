@@ -9,8 +9,12 @@ class DanteDevice
 
 		void updateAddress (IPAddress address, uint32_t timeToLive);
 
-		void setMissing (void);
-		bool getMissing (void);
+		void setMissing (void) { this->missing = true; };
+		bool getMissing (void) { return this->missing; };
+		void setNew (bool state) { this->isNew = state; };
+		bool getNew (void) { return this->isNew; };
+
+		bool populateDeviceInfo (void);
 
 		String getServer (void);
 		String getName (void);
@@ -26,14 +30,14 @@ class DanteDevice
 
 		bool commandGetDeviceName (void);
 		bool commandGetChannelCounts (void);
+		bool commandGetSubscriptions (void);
 
 		String    server;		// server name from A record
 		IPAddress address;		// ip address from A record
 		uint32_t  updated;		// update time in milliseconds
 		uint32_t  timeToLive;	// time to live in seconds
 		bool      missing;      // device disappeared on a scan
-		bool      isNew;		// TODO -- use this flag to scan each found 
-								// TODO -- device for name, num channels, subscriptions
+		bool      isNew;		// new device, needs name, chan counts, subs populated
 
 		String    name;
 		bool      chanCountsValid;
