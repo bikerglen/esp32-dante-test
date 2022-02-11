@@ -14,6 +14,7 @@ class DanteDevice
 
 		String getServer (void);
 		String getName (void);
+		void getChannelCounts (int *tx, int *rx);
 	
 		// connect a channel on this receive device to a a channel on a transmit device
 		// TODO void connect (int rxchan, DanteDevice *txdevice, int txchan);
@@ -24,6 +25,7 @@ class DanteDevice
 			uint16_t cmd, int argLen, uint8_t *args, int maxRespLen, uint8_t *resp);
 
 		bool commandGetDeviceName (void);
+		bool commandGetChannelCounts (void);
 
 		String    server;		// server name from A record
 		IPAddress address;		// ip address from A record
@@ -34,6 +36,7 @@ class DanteDevice
 								// TODO -- device for name, num channels, subscriptions
 
 		String    name;
+		bool      chanCountsValid;
 		int       numTxChannels;
         int       numRxChannels;
 

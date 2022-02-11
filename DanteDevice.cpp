@@ -29,6 +29,11 @@ DanteDevice::DanteDevice (String server, IPAddress address, uint32_t timeToLive)
 	this->updated = now;
 	this->missing = false;
 	this->isNew = true;
+
+	this->name = "";
+	this->chanCountsValid = false;
+	this->numTxChannels = 0;
+	this->numRxChannels = 0;
 }
 
 DanteDevice::~DanteDevice (void)
@@ -77,6 +82,16 @@ String DanteDevice::getName (void)
 	}
 
 	return this->name;
+}
+
+void DanteDevice::getChannelCounts (int *tx, int *rx)
+{
+	if (this->chanCountsValid == false) {
+		this->commandGetChannelCounts ();
+	}
+
+	*tx = this->numTxChannels;
+	*rx = this->numRxChannels;
 }
 
 
@@ -176,6 +191,28 @@ bool DanteDevice::commandGetDeviceName (void)
 		this->name = (char *)&response[10];
 	} else {
 		Serial.printf ("DanteDevice::commandGetDeviceName failed\n\r");
+	}
+
+	return success;
+}
+
+
+bool DanteDevice::commandGetChannelCounts (void)
+{
+	bool success = false;
+	uint8_t args[2] = { 0x00, 0x00 };
+	int respLen;
+	uint8_t response[256];
+	
+	respLen = this->command (
+		4440, 0xff, 0x000a, 0xffff, 0x1000, 2, args, sizeof (response), response);
+
+	if (respLen) {
+		this->chanCountsValid = true;
+		this->numTxChannels = (response[12] << 8) | response[13];
+		this->numRxChannels = (response[14] << 8) | response[15];
+	} else {
+		Serial.printf ("DanteDevice::commandGetChannelCounts failed\n\r");
 	}
 
 	return success;

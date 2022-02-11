@@ -363,6 +363,7 @@ void DanteDeviceList::checkMissingDevices (void)
 void DanteDeviceList::list (void)
 {
 	std::vector<DanteDevice *>::iterator it;
+	int txChans, rxChans;
 
 	for (it = devices.begin(); it != devices.end(); it++) {
 		Serial.printf ("%d.%d.%d.%d %s:\n\r",
@@ -370,8 +371,9 @@ void DanteDeviceList::list (void)
 			(*it)->getServer().c_str());
 		Serial.printf ("  missing: %s\n\r", (*it)->getMissing() ? "yes" : "no");
 		Serial.printf ("  name: %s\n\r", (*it)->getName().c_str());
-		Serial.printf ("  tx channels: %d\n\r", 0);// TODO
-		Serial.printf ("  rx channels: %d\n\r", 0); // TODO
+		(*it)->getChannelCounts (&txChans, &rxChans);
+		Serial.printf ("  tx channels: %d\n\r", txChans);
+		Serial.printf ("  rx channels: %d\n\r", rxChans);
 		Serial.printf ("  subscriptions: \n\r"); // TODO
 	}
 }
