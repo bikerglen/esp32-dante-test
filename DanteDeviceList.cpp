@@ -175,7 +175,7 @@ DanteDevice *DanteDeviceList::searchServer (String server)
 	std::vector<DanteDevice *>::iterator it;
 
 	for (it = devices.begin(); it != devices.end(); it++) {
-		if (!strcmp ((*it)->getServer().c_str(), server.c_str())) {
+		if ((*it)->getServer() == server) {
 			return *it;
 		}
 	}
@@ -190,6 +190,20 @@ DanteDevice *DanteDeviceList::searchAddress (IPAddress address)
 
 	for (it = devices.begin(); it != devices.end(); it++) {
 		if ((*it)->getAddress() == address) {
+			return *it;
+		}
+	}
+		
+	return NULL;
+}
+
+
+DanteDevice *DanteDeviceList::searchName (String name)
+{
+	std::vector<DanteDevice *>::iterator it;
+
+	for (it = devices.begin(); it != devices.end(); it++) {
+		if ((*it)->getName() == name) {
 			return *it;
 		}
 	}

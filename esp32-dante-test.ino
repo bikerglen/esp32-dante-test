@@ -140,6 +140,7 @@ void loop (void)
 bool onLoopTimer (void *)
 {
 	uint8_t newPresses;
+	DanteDevice *receiver;
 
 	// check buttons
 	newPresses = buttonPad.tick ();
@@ -164,8 +165,36 @@ bool onLoopTimer (void *)
 		Serial.printf ("button 6 pressed!\n\r");
 	}
 
-	buttonPad.setButtonColor (0, 0xff, 0x00, 0x00);
-	buttonPad.setButtonColor (1, 0x80, 0x80, 0x00);
+	receiver = devices.searchName (LIVING_ROOM);
+	if (receiver) {
+		DanteRxChannel *rxChan1 = receiver->searchRxChannelName ("CH1");
+		DanteRxChannel *rxChan2 = receiver->searchRxChannelName ("CH2");
+		if (rxChan1 && rxChan2) {
+			if (rxChan1->isConnected (USB_MUSIC_SERVER, "Left") &&
+				rxChan2->isConnected (USB_MUSIC_SERVER, "Right")) {
+				// button 1 red, button 2 off
+				buttonPad.setButtonColor (0, 0xff, 0x00, 0x00);
+				buttonPad.setButtonColor (1, 0x00, 0x00, 0x00);
+			} else if (rxChan1->isConnected (BT_IPAD_OR_PHONE, "Left") &&
+					   rxChan2->isConnected (BT_IPAD_OR_PHONE, "Right")) {
+				// button 1 off, button 2 red
+				buttonPad.setButtonColor (0, 0x00, 0x00, 0x00);
+				buttonPad.setButtonColor (1, 0xff, 0x00, 0x00);
+			} else {
+				// unknown combination or not connected
+				// both buttons yellow
+				buttonPad.setButtonColor (0, 0x80, 0x80, 0x00);
+				buttonPad.setButtonColor (1, 0x80, 0x80, 0x00);
+			}
+		} else {
+			// both channel names not found; set both buttons red
+			buttonPad.setButtonColor (0, 0xff, 0x00, 0x00);
+			buttonPad.setButtonColor (1, 0xff, 0x00, 0x00);
+		}
+	}
+
+	// buttonPad.setButtonColor (0, 0xff, 0x00, 0x00);
+	// buttonPad.setButtonColor (1, 0x80, 0x80, 0x00);
 	buttonPad.setButtonColor (2, 0x00, 0xff, 0x00);
 	buttonPad.setButtonColor (3, 0x00, 0x80, 0x80);
 	buttonPad.setButtonColor (4, 0x00, 0x00, 0xff);

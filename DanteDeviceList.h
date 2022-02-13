@@ -26,6 +26,9 @@ class DanteDeviceList
 		// returns pointer to the device with the specified IP address
 		DanteDevice *searchAddress (IPAddress address);
 
+		// returns pointer to the device with the specified IP address
+		DanteDevice *searchName (String name);
+
 		// returns the number of known devices
 		int getDeviceCount (void);
 

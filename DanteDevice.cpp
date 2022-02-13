@@ -13,6 +13,12 @@
 
 #include "DanteDevice.h"
 
+bool DanteRxChannel::isConnected (String txDevName, String txChanName)
+{
+	return (this->txDevName == txDevName && this->txChanName == txChanName);
+}
+
+
 DanteDevice::DanteDevice (String server, IPAddress address, uint32_t timeToLive)
 {
 	uint32_t now = millis ();
@@ -369,4 +375,18 @@ bool DanteDevice::commandGetSubscriptions (void)
 	}
 
 	return success;
+}
+
+
+DanteRxChannel *DanteDevice::searchRxChannelName (String rxChanName)
+{
+	std::vector<DanteRxChannel *>::iterator it;
+
+	for (it = this->rxChannels.begin(); it != this->rxChannels.end(); it++) {
+		if ((*it)->rxChanName == rxChanName) {
+			return (*it);
+		}
+	}
+
+	return NULL;
 }

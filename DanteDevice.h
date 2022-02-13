@@ -2,10 +2,16 @@ class DanteRxChannel
 {
 	friend class DanteDevice;
 
-	uint16_t rxChanNum;
-	String rxChanName;
-	String txDevName;
-	String txChanName;
+	public:
+
+		bool isConnected (String txDevName, String txChanName);
+
+	private:
+
+		uint16_t rxChanNum;
+		String rxChanName;
+		String txDevName;
+		String txChanName;
 };
 
 class DanteDevice
@@ -35,6 +41,8 @@ class DanteDevice
 		void getChannelCounts (int *tx, int *rx);
 		String getSubscriptions (String prefix, String suffix);
 	
+		DanteRxChannel *searchRxChannelName (String rxChanName);
+
 		// connect a channel on this receive device to a a channel on a transmit device
 		// TODO void connect (int rxchan, DanteDevice *txdevice, int txchan);
 
