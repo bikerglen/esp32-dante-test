@@ -160,6 +160,12 @@ void DanteDeviceList::populateNewDevices (void)
 			(*it)->populateDeviceInfo ();
 			break;
 		}
+		if ((*it)->subscriptionChanges != 0) {
+			Serial.printf ("updating device subscriptions: %s\n\r", (*it)->getServer().c_str());
+			(*it)->decrementSubscriptionChanges ();
+			(*it)->commandGetSubscriptions ();
+			break;
+		}
 	}
 }
 

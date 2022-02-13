@@ -110,13 +110,14 @@ void loop (void)
 	// call repetively in loop to poll for _netaudio_arc services
 	devices.scanIfNeeded ();
 
-	// update any new devices
+	// update any new devices, update any changed subscriptions
 	devices.populateNewDevices ();
 
 	// check for configuration changes
 	device = deviceMonitor.changed ();
 	if (device) {
 		Serial.printf ("device changed\n\r");
+		device->incrementSubscriptionChanges ();
 	}
 
 	// loop timer tick

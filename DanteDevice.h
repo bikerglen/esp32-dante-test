@@ -24,6 +24,9 @@ class DanteDevice
 		void setNew (bool state) { this->isNew = state; };
 		bool getNew (void) { return this->isNew; };
 
+		void incrementSubscriptionChanges (void) { this->subscriptionChanges++; };
+		void decrementSubscriptionChanges (void) { this->subscriptionChanges--; };
+
 		bool populateDeviceInfo (void);
 
 		String getServer (void);
