@@ -1,3 +1,13 @@
+class DanteRxChannel
+{
+	friend class DanteDevice;
+
+	uint16_t rxChanNum;
+	String rxChanName;
+	String txDevName;
+	String txChanName;
+};
+
 class DanteDevice
 {
 	friend class DanteDeviceList;
@@ -19,6 +29,7 @@ class DanteDevice
 		String getServer (void);
 		String getName (void);
 		void getChannelCounts (int *tx, int *rx);
+		String getSubscriptions (String prefix, String suffix);
 	
 		// connect a channel on this receive device to a a channel on a transmit device
 		// TODO void connect (int rxchan, DanteDevice *txdevice, int txchan);
@@ -45,4 +56,6 @@ class DanteDevice
         int       numRxChannels;
 
 		AsyncUDP  udp;
+
+		std::vector<DanteRxChannel *> rxChannels;
 };

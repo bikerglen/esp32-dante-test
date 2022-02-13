@@ -153,12 +153,11 @@ void DanteDeviceList::populateNewDevices (void)
 {
 	std::vector<DanteDevice *>::iterator it;
 
+	// only populate one device per call to give other tasks an opportunity to run
 	for (it = devices.begin(); it != devices.end(); it++) {
 		if ((*it)->getNew ()) {
 			Serial.printf ("populating new device: %s\n\r", (*it)->getServer().c_str());
 			(*it)->populateDeviceInfo ();
-			// only populate one device per call to 
-			// give other tasks an opportunity to run
 			break;
 		}
 	}
@@ -200,6 +199,7 @@ void DanteDeviceList::listDevices (void)
 		Serial.printf ("  tx channels: %d\n\r", txChans);
 		Serial.printf ("  rx channels: %d\n\r", rxChans);
 		Serial.printf ("  subscriptions: \n\r"); // TODO
+		Serial.printf ("%s", (*it)->getSubscriptions ("    ", "\n\r").c_str());
 	}
 }
 

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <memory.h>
+#include <vector>
 
 #include <WiFi.h>
 #include <AsyncUDP.h>
@@ -94,6 +95,26 @@ void DanteDevice::getChannelCounts (int *tx, int *rx)
 
 	*tx = this->numTxChannels;
 	*rx = this->numRxChannels;
+}
+
+String DanteDevice::getSubscriptions (String prefix, String suffix)
+{
+	String list = "";
+
+	std::vector<DanteRxChannel *>::iterator it;
+	for (it = this->rxChannels.begin(); it != this->rxChannels.end(); it++) {
+		list += prefix;
+		list += String ((*it)->rxChanNum) + ": ";
+		list += this->name + "." + (*it)->rxChanName + " <= ";
+		if ((*it)->txDevName == "" || (*it)->txChanName == "") {
+			list += "<none>";
+		} else {
+			list += (*it)->txDevName + "." + (*it)->txChanName;
+		}
+		list += suffix;
+	}
+
+	return list;
 }
 
 
@@ -223,7 +244,128 @@ bool DanteDevice::commandGetChannelCounts (void)
 
 bool DanteDevice::commandGetSubscriptions (void)
 {
-	// TODO -- implement this command
-	Serial.printf ("DanteDevice::commandGetSubscriptions failed\n\r");
-	return false;
+	bool success = false;
+	uint8_t args[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	int respLen;
+	uint8_t response[1536];
+
+	if (this->name == "") {
+		success = this->commandGetDeviceName ();
+		if (!success) {
+			Serial.printf ("DanteDevice::commandGetSubscriptions: failed\n\r");
+			Serial.printf ("  unknown receiver name and get device name failed\n\r");
+			return success;
+		}
+	}
+
+	if (this->chanCountsValid == false) {
+		success = this->commandGetChannelCounts ();
+		if (!success) {
+			Serial.printf ("DanteDevice::commandGetSubscriptions: failed\n\r");
+			Serial.printf ("  channel counts not valid and get channel counts failed\n\r");
+			return success;
+		}
+	}
+
+	for (int page = 0; page < (this->numRxChannels+15)/16; page++) {
+		args[0] = 0x00;
+		args[1] = 0x00;
+		args[2] = 0x00;
+		args[3] = 0x01;
+		args[4] = 0x00;
+		args[5] = (page << 4) | 0x01;
+		args[6] = 0x00;
+		args[7] = 0x00;
+		respLen = this->command (
+			4440, 0xff, 0x0010, 0xffff, 0x3000, 8, args, sizeof (response), response);
+
+		if (respLen) {
+
+			for (int i = 0; i < respLen; i++) {
+				Serial.printf ("%02x ", response[i]);
+			}
+			Serial.printf ("\n\r");
+
+			int pktSlotCount = this->numRxChannels - page*16;
+			if (pktSlotCount > 16) {
+				pktSlotCount = 16;
+			}
+
+			for (int slot = 0; slot < pktSlotCount; slot++) {
+				uint16_t chanNumber    = response[12 + 20*slot +  0] << 8; // rx channel number
+				         chanNumber   |= response[12 + 20*slot +  1];
+				uint16_t txChanOffset  = response[12 + 20*slot +  6] << 8; // tx chan offset
+				         txChanOffset |= response[12 + 20*slot +  7];
+				uint16_t txDevOffset   = response[12 + 20*slot +  8] << 8; // tx device offset
+				         txDevOffset  |= response[12 + 20*slot +  9];
+				uint16_t rxChanOffset  = response[12 + 20*slot + 10] << 8; // rx chan offset
+				         rxChanOffset |= response[12 + 20*slot + 11];
+				uint16_t status1       = response[12 + 20*slot + 12] << 8; // status 1
+				         status1      |= response[12 + 20*slot + 13];
+				uint16_t status2       = response[12 + 20*slot + 14] << 8; // status 2
+				         status2      |= response[12 + 20*slot + 15];
+
+				Serial.printf ("%04x %04x %04x %04x %04x %04x\n\r",
+					chanNumber, txChanOffset, txDevOffset, rxChanOffset, status1, status2);
+
+				String rxChannelName = (char *)&response[rxChanOffset];
+				String txDeviceName = "";
+				String txChannelName = "";
+
+				if (txDevOffset != 0) {
+					txDeviceName = (char *)&response[txDevOffset];
+					if (txDeviceName == ".") {
+						txDeviceName = this->name;
+					}
+				} else {
+					txDeviceName = "";
+				}
+
+				if (txChanOffset != 0) {
+					txChannelName = (char *)&response[txChanOffset];
+				} else {
+					txChannelName = "";
+				}
+
+				Serial.printf ("  %s.%s <= ", this->name.c_str(), rxChannelName.c_str());
+				if (txDeviceName == "" || txChannelName == "") {
+					Serial.printf ("<none>\n\r");
+				} else {
+					Serial.printf ("%s.%s\n\r", txDeviceName.c_str(), txChannelName.c_str());
+				}
+
+				// search for existing rx channel with this channel number
+				std::vector<DanteRxChannel *>::iterator it;
+				DanteRxChannel *rxChannel = NULL;
+				for (it = this->rxChannels.begin(); it != this->rxChannels.end(); it++) {
+					if ((*it)->rxChanNum == chanNumber) {
+						rxChannel = *it;
+						break;
+					}
+				}
+				
+				// not found so add new rx channel
+				if (rxChannel == NULL) {
+					Serial.printf ("adding new rx channel: %d\n\r", chanNumber);
+					rxChannel = new DanteRxChannel ();
+					rxChannel->rxChanNum = chanNumber;
+					this->rxChannels.push_back (rxChannel);
+				}
+
+				// update channel information
+				rxChannel->rxChanName = rxChannelName;
+				rxChannel->txDevName =  txDeviceName;
+				rxChannel->txChanName = txChannelName;
+			}
+
+			success = true;
+		} else {
+			Serial.printf ("DanteDevice::commandGetSubscriptions failed\n\r");
+			break;
+		}
+	}
+
+	return success;
 }
+
+
