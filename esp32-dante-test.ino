@@ -195,10 +195,10 @@ bool onLoopTimer (void *)
 
 	// buttonPad.setButtonColor (0, 0xff, 0x00, 0x00);
 	// buttonPad.setButtonColor (1, 0x80, 0x80, 0x00);
-	buttonPad.setButtonColor (2, 0x00, 0xff, 0x00);
-	buttonPad.setButtonColor (3, 0x00, 0x80, 0x80);
-	buttonPad.setButtonColor (4, 0x00, 0x00, 0xff);
-	buttonPad.setButtonColor (5, 0x80, 0x00, 0x80);
+	// buttonPad.setButtonColor (2, 0x00, 0xff, 0x00);
+	// buttonPad.setButtonColor (3, 0x00, 0x80, 0x80);
+	// buttonPad.setButtonColor (4, 0x00, 0x00, 0xff);
+	// buttonPad.setButtonColor (5, 0x80, 0x00, 0x80);
 
 	// return true to keep timer armed
 	return true;
