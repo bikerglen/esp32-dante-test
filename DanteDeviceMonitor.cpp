@@ -11,6 +11,7 @@
 #include <lwip/ip_addr.h>
 #include <lwip/igmp.h>
 #include <Arduino.h>
+#include <RingBuf.h>
 
 #include <vector>
 
@@ -20,7 +21,8 @@
 
 DanteDeviceMonitor::DanteDeviceMonitor (void)
 {
-	// TODO -- allocate a buffer for received packets
+	// allocate a buffer for received packets' IP addresses
+	pbuff = RingBuf_new (sizeof (IPAddress), 32);
 }
 
 
@@ -81,20 +83,30 @@ void DanteDeviceMonitor::parsePacket (AsyncUDPPacket _packet)
 		(packet[27] == 0x02)) {
 		Serial.printf ("  receiver changed subscriptions on channel %d\n\r", packet[34]);
 
-		// TODO -- drop IP addresses of received packets into ring buffer
-		// TODO -- so that changed can parse them and look them up in
-		// TODO -- reverse mDNS function and code can query devices for changes
+		// push IP addresses of received packets into ring buffer
+		this->pbuff->add (this->pbuff, &remoteAddr);
 	}
 }
 
 
-DanteDevice *DanteDeviceMonitor::changed (void)
+DanteDevice *DanteDeviceMonitor::changed (DanteDeviceList *devices)
 {
-	// TODO -- pop IP address off ring buffer
-	// TODO -- search DanteDeviceList for IP address of changed device
-	// TODO -- return device
-	// TODO -- if no IP address or IP address not found, return NULL
-	return NULL;
+	IPAddress address;
+	DanteDevice *device = NULL;
+
+	// pop IP address off ring buffer
+	if (!this->pbuff->isEmpty(this->pbuff)) {
+		this->pbuff->pull (this->pbuff, &address);
+
+		Serial.printf ("  popped changed IP address %d.%d.%d.%d\n\r", 
+			address[0], address[1], address[2], address[3]);
+		
+		// search DanteDeviceList for IP address of changed device
+		device = devices->searchAddress (address);
+	}
+	
+	// return device or null if none
+	return device;
 }
 
 /*

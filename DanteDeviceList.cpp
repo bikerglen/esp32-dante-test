@@ -184,6 +184,20 @@ DanteDevice *DanteDeviceList::searchServer (String server)
 }
 
 
+DanteDevice *DanteDeviceList::searchAddress (IPAddress address)
+{
+	std::vector<DanteDevice *>::iterator it;
+
+	for (it = devices.begin(); it != devices.end(); it++) {
+		if ((*it)->getAddress() == address) {
+			return *it;
+		}
+	}
+		
+	return NULL;
+}
+
+
 int DanteDeviceList::getDeviceCount (void)
 {
 	return devices.size();

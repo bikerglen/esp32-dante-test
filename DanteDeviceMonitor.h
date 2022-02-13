@@ -10,7 +10,7 @@ class DanteDeviceMonitor
 
 		// call this from main loop to get dante devices that have had their
 		// configuration changed
-		DanteDevice *changed (void);
+		DanteDevice *changed (DanteDeviceList *devices);
 
 	private:
 
@@ -18,5 +18,5 @@ class DanteDeviceMonitor
 		void parsePacket (AsyncUDPPacket _packet);
 
 		AsyncUDP udp;
-		// TODO RingBuf *pbuff;
+		RingBuf *pbuff;
 };

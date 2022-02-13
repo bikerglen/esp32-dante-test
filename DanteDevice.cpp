@@ -80,11 +80,6 @@ bool DanteDevice::populateDeviceInfo (void)
 	return success;
 }
 
-String DanteDevice::getServer (void)
-{	
-	return server;
-}
-
 String DanteDevice::getName (void)
 {
 	// retrieve device name from device if needed

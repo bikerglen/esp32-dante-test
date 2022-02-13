@@ -15,6 +15,7 @@
 #include <vector>
 #include <arduino-timer.h>
 #include <Wire.h>
+#include <RingBuf.h>
 
 #include "AsyncUDP.h"
 #include "DanteDevice.h"
@@ -114,7 +115,7 @@ void loop (void)
 	devices.populateNewDevices ();
 
 	// check for configuration changes
-	device = deviceMonitor.changed ();
+	device = deviceMonitor.changed (&devices);
 	if (device) {
 		Serial.printf ("device changed\n\r");
 		device->incrementSubscriptionChanges ();

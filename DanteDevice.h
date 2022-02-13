@@ -29,7 +29,8 @@ class DanteDevice
 
 		bool populateDeviceInfo (void);
 
-		String getServer (void);
+		String getServer (void) { return this->server; };
+		IPAddress getAddress (void) { return this->address; };
 		String getName (void);
 		void getChannelCounts (int *tx, int *rx);
 		String getSubscriptions (String prefix, String suffix);
