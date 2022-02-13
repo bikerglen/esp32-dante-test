@@ -31,6 +31,8 @@ DanteDevice::DanteDevice (String server, IPAddress address, uint32_t timeToLive)
 	this->missing = false;
 	this->isNew = true;
 
+	this->subscriptionChanges = 0;
+
 	this->name = "";
 	this->chanCountsValid = false;
 	this->numTxChannels = 0;
@@ -53,6 +55,12 @@ void DanteDevice::updateAddress (IPAddress address, uint32_t timeToLive)
 	Serial.printf ("    now:         %d\n\r", now);
 
 	Serial.printf ("    was missing: %s\n\r", this->missing ? "yes" : "no");
+
+	if (this->missing) {
+		// no longer missing, mark as new so name, channel counts, 
+		// and subscriptions get updated
+		this->isNew = true;
+	}
 
 	this->address = address;
 	this->timeToLive = timeToLive;
@@ -367,5 +375,3 @@ bool DanteDevice::commandGetSubscriptions (void)
 
 	return success;
 }
-
-

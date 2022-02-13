@@ -20,8 +20,11 @@ class DanteDeviceList
 		// populates name, channel counts, and subscription info for any new devices
 		void populateNewDevices (void);
 
-		// returns pointer to the device with the server name
+		// returns pointer to the device with the specified server name
 		DanteDevice *searchServer (String server);
+
+		// TODO - returns pointer to the device with the specified IP address
+		DanteDevice *searchIPAddress (IPAddress address);
 
 		// returns the number of known devices
 		int getDeviceCount (void);

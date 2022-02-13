@@ -50,12 +50,21 @@ class DanteDevice
 		bool      missing;      // device disappeared on a scan
 		bool      isNew;		// new device, needs name, chan counts, subs populated
 
+		// This starts at zero. For every multicast subscription change notififcation received 
+		// for the device, this is incremented by 1. When it's non-zero, 
+		// commandGetSubscriptions should be called and the value decremented by 1. Counter is 
+		// needed instead of a simple flag because a change could cause 4 updates in a row 
+		// on 2 channel device, e.g. unsubscribe ch1, subscribe ch1, unsubscribe ch2, 
+		// subscribe ch2, in rapid succession and inc/dec functions are likely on separate
+		// threads. Probably needs wrapping inc/dec functions and a semaphore to control 
+		// access.  
+		int       subscriptionChanges;
+
 		String    name;
 		bool      chanCountsValid;
 		int       numTxChannels;
         int       numRxChannels;
+		std::vector<DanteRxChannel *> rxChannels;
 
 		AsyncUDP  udp;
-
-		std::vector<DanteRxChannel *> rxChannels;
 };
