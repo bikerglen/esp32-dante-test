@@ -67,6 +67,9 @@ void setup (void)
 	Serial.println("Ethernet connected!");
 	Serial.print("IP address: ");
 	Serial.println(ETH.localIP()); 
+
+	// seed random number generator from IP address
+	randomSeed ((uint32_t)ETH.localIP());
 #else
 	// set up wireless
 	WiFi.begin (ssid, password);
@@ -80,6 +83,9 @@ void setup (void)
 	Serial.println("WiFi connected!");
 	Serial.print("IP address: ");
 	Serial.println(WiFi.localIP()); 
+
+	// seed random number generator from IP address
+	randomSeed ((uint32_t)WiFi.localIP());
 #endif
 
 	// set up Dante mDNS listener
@@ -87,9 +93,6 @@ void setup (void)
 
 	// set up Dante config change monitor
 	deviceMonitor.begin ();
-
-	// seed random number generator
-	randomSeed ((uint32_t)IPAddress (224, 0, 0, 251));
 
 	// call once in setup after connected to network to poll for _netaudio_arc services
 	Serial.printf ("scanning...\n\r");
@@ -117,6 +120,13 @@ void loop (void)
 	// check for configuration changes
 	device = deviceMonitor.changed (&devices);
 	if (device) {
+		// The device monitor detects the subscription change packets from the
+		// dante receiver and returns a pointer to the correspond device from devices. 
+		// We then increment the device's subscription change count, and when subscription 
+		// change count is non-zero, device list populate new devices will retrieve the 
+		// udpated subscription information from the dante receiver and set the subscription 
+		// updated flag for use by the MQTT publisher and/or local button lights.
+		// receive change packet -> query device for updated info -> send MQTT request
 		Serial.printf ("device changed\n\r");
 		device->incrementSubscriptionChanges ();
 	}
@@ -165,6 +175,10 @@ bool onLoopTimer (void *)
 		Serial.printf ("button 6 pressed!\n\r");
 	}
 
+	// TODO -- add some sort of flag that can be checked to indicate a 
+	// TODO -- subscription update then cleared when done
+	// TODO -- add mqtt publish of all device subscription status changes
+	// TODO -- subscribe to all mqtt subscription change commands
 	receiver = devices.searchName (LIVING_ROOM);
 	if (receiver) {
 		DanteRxChannel *rxChan1 = receiver->searchRxChannelName ("CH1");
