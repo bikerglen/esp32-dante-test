@@ -164,6 +164,7 @@ void DanteDeviceList::populateNewDevices (void)
 			Serial.printf ("updating device subscriptions: %s\n\r", (*it)->getServer().c_str());
 			(*it)->decrementSubscriptionChanges ();
 			(*it)->commandGetSubscriptions ();
+			// TODO -- set subscription updated flag for MQTT sender / local button lights
 			break;
 		}
 	}
