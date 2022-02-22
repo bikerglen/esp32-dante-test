@@ -51,7 +51,7 @@ void setup (void)
 	buttonPad.begin (32, 33, 34, 35, 36, 39, &wire);
 #else
 	wire.begin (26, 27);
-	buttonPad.begin (&wire);
+	buttonPad.begin (&wire, 4);
 	// buttonPad.begin (34, 35, 32, 33, 25, 14, &wire);
 #endif
 

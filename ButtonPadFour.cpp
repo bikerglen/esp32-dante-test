@@ -38,17 +38,49 @@ ButtonPadFour::~ButtonPadFour (void)
 }
 
 
-void ButtonPadFour::begin (TwoWire *wire)
+void ButtonPadFour::begin (TwoWire *wire, uint8_t numButtons)
 {
-	for (int i = 0; i < BP4_NUM_BUTTONS; i++) {
+	// save number of buttons
+	this->numButtons = numButtons;
+
+	// save i2c interface
+	this->wire = wire;
+
+	// configure PCA9685 PWM driver #1
+	if (numButtons > 0) {
+		this->initPCA9685 (BP48_PCA9685_I2C_ADDRESS_0);
+	}
+
+	// configure PCA9685 PWM driver #2
+	if (numButtons > 4) {
+		this->initPCA9685 (BP48_PCA9685_I2C_ADDRESS_1);
+	}
+
+	// configure PCA9535 I2C IO expander
+	this->initPCA9535 (BP48_PCA9535_I2C_ADDRESS);
+
+	// initialize button masks
+	if (numButtons == 4) {
+		this->buttonMasks[0] = 0x0800;
+		this->buttonMasks[1] = 0x0400;
+		this->buttonMasks[2] = 0x0200;
+		this->buttonMasks[3] = 0x0100;
+	} else if (numButtons == 8) {
+		this->buttonMasks[0] = 0x0400;
+		this->buttonMasks[1] = 0x0200;
+		this->buttonMasks[2] = 0x0800;
+		this->buttonMasks[3] = 0x0100;
+		this->buttonMasks[4] = 0x0010;
+		this->buttonMasks[5] = 0x0080;
+		this->buttonMasks[6] = 0x0040;
+		this->buttonMasks[7] = 0x0020;
+	}
+
+	// initialize button states
+	for (int i = 0; i < BP48_MAX_BUTTONS; i++) {
 		this->buttonStates[i] = 0;
 		this->buttonDownEvents[i] = false;
 	}
-
-	// configure LEDs
-	this->wire = wire;
-	this->initPCA9685 (BP4_PCA9685_I2C_ADDRESS);
-	this->initPCA9535 (BP4_PCA9535_I2C_ADDRESS);
 }
 
 
@@ -58,10 +90,10 @@ uint8_t ButtonPadFour::tick (void)
 	uint8_t retval = 0;
 
     // debounce pushbuttons
-    this->DebounceButtons (BP4_PCA9535_I2C_ADDRESS);
+    this->DebounceButtons (BP48_PCA9535_I2C_ADDRESS);
 
     // return button presses as a single byte with bits set to '1' for any new presses
-    for (int i = 0; i < BP4_NUM_BUTTONS; i++) {
+    for (int i = 0; i < this->numButtons; i++) {
         if (buttonDownEvents[i]) {
             buttonDownEvents[i] = false;
 			retval |= (1 << i);
@@ -74,26 +106,27 @@ uint8_t ButtonPadFour::tick (void)
 
 void ButtonPadFour::setButtonColor (uint8_t which, uint8_t r, uint8_t g, uint8_t b)
 {
+	// TODO
 	switch (which) {
 		case 0: 
-			SetPWMInv (BP4_PCA9685_I2C_ADDRESS, BP4_SW1_PWM_RED_CH, led_gamma_12b_2p8[r]);
-			SetPWMInv (BP4_PCA9685_I2C_ADDRESS, BP4_SW1_PWM_GRN_CH, led_gamma_12b_2p8[g]);
-			SetPWMInv (BP4_PCA9685_I2C_ADDRESS, BP4_SW1_PWM_BLU_CH, led_gamma_12b_2p8[b]);
+			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW1_PWM_RED_CH, led_gamma_12b_2p8[r]);
+			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW1_PWM_GRN_CH, led_gamma_12b_2p8[g]);
+			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW1_PWM_BLU_CH, led_gamma_12b_2p8[b]);
 			break;
 		case 1: 
-			SetPWMInv (BP4_PCA9685_I2C_ADDRESS, BP4_SW2_PWM_RED_CH, led_gamma_12b_2p8[r]);
-			SetPWMInv (BP4_PCA9685_I2C_ADDRESS, BP4_SW2_PWM_GRN_CH, led_gamma_12b_2p8[g]);
-			SetPWMInv (BP4_PCA9685_I2C_ADDRESS, BP4_SW2_PWM_BLU_CH, led_gamma_12b_2p8[b]);
+			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW2_PWM_RED_CH, led_gamma_12b_2p8[r]);
+			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW2_PWM_GRN_CH, led_gamma_12b_2p8[g]);
+			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW2_PWM_BLU_CH, led_gamma_12b_2p8[b]);
 			break;
 		case 2: 
-			SetPWMInv (BP4_PCA9685_I2C_ADDRESS, BP4_SW3_PWM_RED_CH, led_gamma_12b_2p8[r]);
-			SetPWMInv (BP4_PCA9685_I2C_ADDRESS, BP4_SW3_PWM_GRN_CH, led_gamma_12b_2p8[g]);
-			SetPWMInv (BP4_PCA9685_I2C_ADDRESS, BP4_SW3_PWM_BLU_CH, led_gamma_12b_2p8[b]);
+			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW3_PWM_RED_CH, led_gamma_12b_2p8[r]);
+			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW3_PWM_GRN_CH, led_gamma_12b_2p8[g]);
+			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW3_PWM_BLU_CH, led_gamma_12b_2p8[b]);
 			break;
 		case 3: 
-			SetPWMInv (BP4_PCA9685_I2C_ADDRESS, BP4_SW4_PWM_RED_CH, led_gamma_12b_2p8[r]);
-			SetPWMInv (BP4_PCA9685_I2C_ADDRESS, BP4_SW4_PWM_GRN_CH, led_gamma_12b_2p8[g]);
-			SetPWMInv (BP4_PCA9685_I2C_ADDRESS, BP4_SW4_PWM_BLU_CH, led_gamma_12b_2p8[b]);
+			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW4_PWM_RED_CH, led_gamma_12b_2p8[r]);
+			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW4_PWM_GRN_CH, led_gamma_12b_2p8[g]);
+			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW4_PWM_BLU_CH, led_gamma_12b_2p8[b]);
 			break;
 	}
 }
@@ -103,25 +136,25 @@ void ButtonPadFour::initPCA9685 (uint8_t address)
 {
     // place PCA9685 into sleep and enable auto address increment
     this->wire->beginTransmission (address);
-    this->wire->write (BP4_MODE1);
+    this->wire->write (BP48_MODE1);
     this->wire->write (0x30);
     this->wire->endTransmission (true);
 
     // update on stop and open drain
     this->wire->beginTransmission (address);
-    this->wire->write (BP4_MODE2);
+    this->wire->write (BP48_MODE2);
     this->wire->write (0x00);
     this->wire->endTransmission (true);
 
     // set for maximum PWM frequency
     this->wire->beginTransmission (address);
-    this->wire->write (BP4_PRESCALE);
+    this->wire->write (BP48_PRESCALE);
     this->wire->write (0x02);
     this->wire->endTransmission (true);
 
     // take PCA9685 out of sleep and enable auto address increment
     this->wire->beginTransmission (address);
-    this->wire->write (BP4_MODE1);
+    this->wire->write (BP48_MODE1);
     this->wire->write (0x20);
     this->wire->endTransmission (true);
     
@@ -158,32 +191,39 @@ void ButtonPadFour::initPCA9535 (uint8_t address)
 
 void ButtonPadFour::DebounceButtons (uint8_t address)
 {
-	uint8_t readData;
+	uint8_t tmp;
+	uint16_t readData = 0;
 
-    this->wire->beginTransmission (address);
-    this->wire->write (0x01); // port 1 input data register
-    this->wire->endTransmission (false);
-	this->wire->requestFrom (address, 1, true); 
-    readData = this->wire->read ();
+	if (this->numButtons > 0) {
+		this->wire->beginTransmission (address);
+		this->wire->write (0x01); // port 1 input data register, buttons 1 to 4
+		this->wire->endTransmission (false);
+		this->wire->requestFrom ((uint8_t)address, (size_t)1, (bool)true); 
+		tmp = this->wire->read ();
+		readData |= tmp << 8; // save in high byte
+	}
 
-    for (int i = 0; i < BP4_NUM_BUTTONS; i++) {
+	if (this->numButtons > 4) {
+		this->wire->beginTransmission (address);
+		this->wire->write (0x00); // port 0 input data register, buttons 5 to 8
+		this->wire->endTransmission (false);
+		this->wire->requestFrom ((uint8_t)address, (size_t)1, (bool)true); 
+		tmp = this->wire->read ();
+		readData |= tmp; // save in low byte
+	}
 
-		uint8_t buttonData;
+    for (int i = 0; i < this->numButtons; i++) {
 
-		switch (i) {
-			case 0: buttonData = (readData & 0x08) ? 0 : 1; break;
-			case 1: buttonData = (readData & 0x04) ? 0 : 1; break;
-			case 2: buttonData = (readData & 0x02) ? 0 : 1; break;
-			case 3: buttonData = (readData & 0x01) ? 0 : 1; break;
-			default: buttonData = 1; break;
-		}
+		uint8_t buttonDown;
+
+		buttonDown = (readData & this->buttonMasks[i]) ? 0 : 1;
 
         switch (buttonStates[i]) {
             case 0:
-                buttonStates[i] = buttonData ? 1 : 0;
+                buttonStates[i] = buttonDown ? 1 : 0;
                 break;
             case 1:
-                if (buttonData) {
+                if (buttonDown) {
                     buttonStates[i] = 2;
                     buttonDownEvents[i] = true;
                 } else {
@@ -191,10 +231,10 @@ void ButtonPadFour::DebounceButtons (uint8_t address)
                 }
                 break;
             case 2:
-                buttonStates[i] = buttonData ? 2 : 3;
+                buttonStates[i] = buttonDown ? 2 : 3;
                 break;
             case 3:
-                buttonStates[i] = buttonData ? 2 : 0;
+                buttonStates[i] = buttonDown ? 2 : 0;
                 break;
             default:
                 buttonStates[i] = 0;
@@ -238,7 +278,7 @@ void ButtonPadFour::SetPWMInv (uint8_t address, uint8_t channel, uint16_t v)
 void ButtonPadFour::SetPWMRaw (uint8_t address, uint8_t channel, uint16_t on, uint16_t off)
 {
     this->wire->beginTransmission (address);
-    this->wire->write (BP4_LED0_ON_L + 4 * channel);
+    this->wire->write (BP48_LED0_ON_L + 4 * channel);
     this->wire->write (on);
     this->wire->write (on >> 8);
     this->wire->write (off);

@@ -1,14 +1,20 @@
-#define BP4_NUM_BUTTONS           6
+// This class supports both my four and eight button button pads.
+// Pass 4 or 8 to the numButtons argument of the begin method to
+// select which button pad is connected.
+
+// max number of buttons
+#define BP48_MAX_BUTTONS           8
 
 // PCA9685 defines
-#define BP4_PCA9685_I2C_ADDRESS   0x40
-#define BP4_MODE1                 0x00
-#define BP4_MODE2                 0x01
-#define BP4_LED0_ON_L             0x06
-#define BP4_PRESCALE              0xFE
+#define BP48_PCA9685_I2C_ADDRESS_0 0x40
+#define BP48_PCA9685_I2C_ADDRESS_1 0x41
+#define BP48_MODE1                 0x00
+#define BP48_MODE2                 0x01
+#define BP48_LED0_ON_L             0x06
+#define BP48_PRESCALE              0xFE
 
 // PCA9535 defines
-#define BP4_PCA9535_I2C_ADDRESS   0x20
+#define BP48_PCA9535_I2C_ADDRESS   0x20
 
 // button pins
 // TODO
@@ -36,7 +42,7 @@ class ButtonPadFour
 
 		ButtonPadFour (void);
 		~ButtonPadFour(void);
-		void begin (TwoWire *wire);
+		void begin (TwoWire *wire, uint8_t numButtons);
 		uint8_t tick (void);
 		void setButtonColor (uint8_t which, uint8_t r, uint8_t g, uint8_t b);
 
@@ -50,6 +56,8 @@ class ButtonPadFour
 		void SetPWMRaw (uint8_t address, uint8_t channel, uint16_t on, uint16_t off);
 
 		TwoWire *wire;
-		uint8_t buttonStates[BP4_NUM_BUTTONS];
-		bool    buttonDownEvents[BP4_NUM_BUTTONS];
+		uint8_t  numButtons;
+		uint16_t buttonMasks[BP48_MAX_BUTTONS];
+		uint8_t  buttonStates[BP48_MAX_BUTTONS];
+		bool     buttonDownEvents[BP48_MAX_BUTTONS];
 };
