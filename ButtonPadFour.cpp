@@ -106,28 +106,74 @@ uint8_t ButtonPadFour::tick (void)
 
 void ButtonPadFour::setButtonColor (uint8_t which, uint8_t r, uint8_t g, uint8_t b)
 {
-	// TODO
-	switch (which) {
-		case 0: 
-			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW1_PWM_RED_CH, led_gamma_12b_2p8[r]);
-			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW1_PWM_GRN_CH, led_gamma_12b_2p8[g]);
-			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW1_PWM_BLU_CH, led_gamma_12b_2p8[b]);
-			break;
-		case 1: 
-			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW2_PWM_RED_CH, led_gamma_12b_2p8[r]);
-			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW2_PWM_GRN_CH, led_gamma_12b_2p8[g]);
-			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW2_PWM_BLU_CH, led_gamma_12b_2p8[b]);
-			break;
-		case 2: 
-			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW3_PWM_RED_CH, led_gamma_12b_2p8[r]);
-			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW3_PWM_GRN_CH, led_gamma_12b_2p8[g]);
-			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW3_PWM_BLU_CH, led_gamma_12b_2p8[b]);
-			break;
-		case 3: 
-			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW4_PWM_RED_CH, led_gamma_12b_2p8[r]);
-			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW4_PWM_GRN_CH, led_gamma_12b_2p8[g]);
-			SetPWMInv (BP48_PCA9685_I2C_ADDRESS_0, BP4_SW4_PWM_BLU_CH, led_gamma_12b_2p8[b]);
-			break;
+	uint8_t rch, gch, bch;
+
+	if (this->numButtons == 4) {
+		switch (which) {
+			case 0: 
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP4_SW1_PWM_RED_CH,led_gamma_12b_2p8[r]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP4_SW1_PWM_GRN_CH,led_gamma_12b_2p8[g]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP4_SW1_PWM_BLU_CH,led_gamma_12b_2p8[b]);
+				break;
+			case 1: 
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP4_SW2_PWM_RED_CH,led_gamma_12b_2p8[r]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP4_SW2_PWM_GRN_CH,led_gamma_12b_2p8[g]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP4_SW2_PWM_BLU_CH,led_gamma_12b_2p8[b]);
+				break;
+			case 2: 
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP4_SW3_PWM_RED_CH,led_gamma_12b_2p8[r]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP4_SW3_PWM_GRN_CH,led_gamma_12b_2p8[g]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP4_SW3_PWM_BLU_CH,led_gamma_12b_2p8[b]);
+				break;
+			case 3: 
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP4_SW4_PWM_RED_CH,led_gamma_12b_2p8[r]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP4_SW4_PWM_GRN_CH,led_gamma_12b_2p8[g]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP4_SW4_PWM_BLU_CH,led_gamma_12b_2p8[b]);
+				break;
+		}
+	} else if (this->numButtons == 8) {
+		switch (which) {
+			case 0: 
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP8_SW1_PWM_RED_CH,led_gamma_12b_2p8[r]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP8_SW1_PWM_GRN_CH,led_gamma_12b_2p8[g]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP8_SW1_PWM_BLU_CH,led_gamma_12b_2p8[b]);
+				break;
+			case 1: 
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP8_SW2_PWM_RED_CH,led_gamma_12b_2p8[r]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP8_SW2_PWM_GRN_CH,led_gamma_12b_2p8[g]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP8_SW2_PWM_BLU_CH,led_gamma_12b_2p8[b]);
+				break;
+			case 2: 
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_1,BP8_SW3_PWM_RED_CH,led_gamma_12b_2p8[r]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_1,BP8_SW3_PWM_GRN_CH,led_gamma_12b_2p8[g]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_1,BP8_SW3_PWM_BLU_CH,led_gamma_12b_2p8[b]);
+				break;
+			case 3: 
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_1,BP8_SW4_PWM_RED_CH,led_gamma_12b_2p8[r]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_1,BP8_SW4_PWM_GRN_CH,led_gamma_12b_2p8[g]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_1,BP8_SW4_PWM_BLU_CH,led_gamma_12b_2p8[b]);
+				break;
+			case 4: 
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP8_SW5_PWM_RED_CH,led_gamma_12b_2p8[r]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP8_SW5_PWM_GRN_CH,led_gamma_12b_2p8[g]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP8_SW5_PWM_BLU_CH,led_gamma_12b_2p8[b]);
+				break;
+			case 5: 
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP8_SW6_PWM_RED_CH,led_gamma_12b_2p8[r]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP8_SW6_PWM_GRN_CH,led_gamma_12b_2p8[g]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_0,BP8_SW6_PWM_BLU_CH,led_gamma_12b_2p8[b]);
+				break;
+			case 6: 
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_1,BP8_SW7_PWM_RED_CH,led_gamma_12b_2p8[r]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_1,BP8_SW7_PWM_GRN_CH,led_gamma_12b_2p8[g]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_1,BP8_SW7_PWM_BLU_CH,led_gamma_12b_2p8[b]);
+				break;
+			case 7: 
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_1,BP8_SW8_PWM_RED_CH,led_gamma_12b_2p8[r]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_1,BP8_SW8_PWM_GRN_CH,led_gamma_12b_2p8[g]);
+				SetPWMInv(BP48_PCA9685_I2C_ADDRESS_1,BP8_SW8_PWM_BLU_CH,led_gamma_12b_2p8[b]);
+				break;
+		}
 	}
 }
 
