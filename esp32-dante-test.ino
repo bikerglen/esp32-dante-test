@@ -24,7 +24,8 @@
 
 #include "secrets.h"
 
-#include "ButtonPadSix.h"
+#include "ButtonPadFour.h"
+// #include "ButtonPadSix.h"
 
 static volatile bool eth_connected = false;
 
@@ -35,7 +36,8 @@ auto loopTimer = timer_create_default();
 bool onLoopTimer (void *);
 
 TwoWire wire = TwoWire (0);
-ButtonPadSix buttonPad = ButtonPadSix ();
+ButtonPadFour buttonPad = ButtonPadFour ();
+// ButtonPadSix buttonPad = ButtonPadSix ();
 
 void setup (void)
 {
@@ -49,7 +51,8 @@ void setup (void)
 	buttonPad.begin (32, 33, 34, 35, 36, 39, &wire);
 #else
 	wire.begin (26, 27);
-	buttonPad.begin (34, 35, 32, 33, 25, 14, &wire);
+	buttonPad.begin (&wire);
+	// buttonPad.begin (34, 35, 32, 33, 25, 14, &wire);
 #endif
 
 #ifdef ARDUINO_ESP32_GATEWAY_F
@@ -173,6 +176,12 @@ bool onLoopTimer (void *)
 	} 
 	if (newPresses & 0x20) {
 		Serial.printf ("button 6 pressed!\n\r");
+	}
+	if (newPresses & 0x40) {
+		Serial.printf ("button 6 pressed!\n\r");
+	} 
+	if (newPresses & 0x80) {
+		Serial.printf ("button 7 pressed!\n\r");
 	}
 
 	// TODO -- add some sort of flag that can be checked to indicate a 
