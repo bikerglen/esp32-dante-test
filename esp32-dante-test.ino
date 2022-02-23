@@ -178,10 +178,10 @@ bool onLoopTimer (void *)
 		Serial.printf ("button 6 pressed!\n\r");
 	}
 	if (newPresses & 0x40) {
-		Serial.printf ("button 6 pressed!\n\r");
+		Serial.printf ("button 7 pressed!\n\r");
 	} 
 	if (newPresses & 0x80) {
-		Serial.printf ("button 7 pressed!\n\r");
+		Serial.printf ("button 8 pressed!\n\r");
 	}
 
 	// TODO -- add some sort of flag that can be checked to indicate a 
